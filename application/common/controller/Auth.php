@@ -20,18 +20,35 @@ use think\facade\Cache;
  */
 class Auth
 {
-    public $unAuthAction=[];
+    public $unAuthAction=[
+        'index/login/login'
+    ];
     public $uid;
     public function __construct()
     {
-        $this->tokenVerify();
+        if($this->isAuthNecessary()){
+            $this->tokenVerify();
+        }else{
+            return true;
+        }
+
     }
-    public function tokenVerify(){
+    public function tokenVerify()
+    {
         if(config('token.token_verify') === true ){
             //因token验证机制只会验证一次 所以此处可以使用new实例化
             $token  =   new Token();
             $token->tokenVerify(app('input')->token);
             $this->uid  =   $token->uid;
+        }
+    }
+    public function isAuthNecessary():bool
+    {
+        $authName   =   app('input')->authName;
+        if(in_array($authName,$this->unAuthAction)){
+            return false;
+        }else{
+            return true;
         }
     }
 

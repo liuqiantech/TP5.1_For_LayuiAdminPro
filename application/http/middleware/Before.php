@@ -13,7 +13,6 @@ class Before
         if(Request::method()=="OPTIONS"){
             return   \response('');
         };
-
         bind('input','app\common\controller\Input');
         app('input');
         bind('auth','app\common\controller\Auth');

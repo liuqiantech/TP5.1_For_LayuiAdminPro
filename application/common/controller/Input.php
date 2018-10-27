@@ -37,13 +37,11 @@ class Input extends Controller
     public $action;
     //*请求方式
     public $method;
+    //*权限验证
+    public $authName;
     //*需要验证变量的方法
-    //*后期改为module/controller/action方式
-    protected $valiArray   =   [
-        'reg',
-        'sendRegCode'
-        ,'recharge'
-    ];
+
+    protected $validateArray   =   [];
     public function __construct()
     {
         $this->input        =       \think\facade\Request::param();
@@ -55,10 +53,13 @@ class Input extends Controller
         $this->setLang();
         //*获取token
         $this->getToken();
+        //*获取请求的auth name
+        $this->getAuthName();
+        //*获取需要验证输入变量的数组
+        $this->getValidateArray();
         //*变量验证
-        $this->token    =   'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ4aWFvaGFyaWppLmNvbSIsInVpZCI6MSwiaWF0IjoxNTQwNTY0NzI3LCJleHAiOjE1NDA1OTM1Mjd9.9IZeFLnbne2F5nv1A8ktwU7E-QEjfTY4dCCvBRWRj8c';
+        $this->token  ;
         if($this->isValidateNecessary()){
-
             $this->inputValidate();
         }else{
             return true;
@@ -66,21 +67,35 @@ class Input extends Controller
         return true;
     }
 
+    /**获取当前请求的auth name
+     * @return string
+     */
+    public function getAuthName():string
+    {
+        if(true === config('app.url_convert')){
+            return $this->authName     =   $this->module.'/'.strtolower($this->controller).'/'.strtolower($this->action);
+        }else{
+            return $this->authName     =   $this->module.'/'.$this->controller.'/'.$this->action;
+        }
+    }
+
+    /**获取需要验证变量的请求，后期删除
+     * @return array
+     */
+    public function getValidateArray():array
+    {
+        return $this->validateArray =[
+            'index/index/index'
+            ,'index/login/login'
+        ];
+    }
+
     /**判断当前请求方法是否需要变量验证
      * @return bool
      */
     public function isValidateAction():bool
     {
-        //todo:根据数据库权限表来判断是否需求验证数据
-        $validateAction =   [
-            'index/index/index'
-        ];
-        if(true === config('app.url_convert')){
-            $action     =   $this->module.'/'.strtolower($this->controller).'/'.strtolower($this->action);
-        }else{
-            $action     =   $this->module.'/'.$this->controller.'/'.$this->action;
-        }
-        if(in_array($action,$validateAction)){
+        if(in_array($this->authName,$this->validateArray)){
             return true;
         }else{
             return false;
@@ -122,7 +137,8 @@ class Input extends Controller
     /**设置语言包，检测输入变量中是否包含lang
      * @return array
      */
-    protected function setLang(){
+    protected function setLang():array
+    {
        if(  false ===   array_key_exists('lang',$this->input)){
           return Lang::load( '../application/common/lang/zh-cn.php');
        }elseif (array_key_exists($this->input['lang'],['zh-cn','en-us'])){
@@ -137,7 +153,8 @@ class Input extends Controller
      * @return bool
      * @throws CommonException
      */
-    protected function getToken(){
+    protected function getToken():bool
+    {
         if(true === config('token.token_verify')){
                 switch(true){
                     case config('token.token_position')=='param':
